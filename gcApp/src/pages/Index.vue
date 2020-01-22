@@ -39,7 +39,8 @@
             selection="single"
             :selected.sync="selected"
             row-key="nome"
-          />
+          >
+          </q-table>
         </div>
       </template>
     </q-card-section>
