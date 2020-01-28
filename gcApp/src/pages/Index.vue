@@ -29,19 +29,60 @@
       />
       <br />
       <br />
-
       <template>
         <div v-if="contatos.length !== 0">
-          <q-table
-            title="Contatos"
-            :data="contatos"
-            :columns="columns"
-            selection="single"
-            :selected.sync="selected"
-            row-key="nome"
-          >
-          </q-table>
+          <el-table :data="contatos" style="width: 100%">
+            <el-table-column fixed prop="nome" label="Nome" width="200">
+            </el-table-column>
+            <el-table-column prop="valor" label="Valor" width="200">
+            </el-table-column>
+            <el-table-column prop="obs" label="Observação" width="200">
+            </el-table-column>
+            <el-table-column prop="canal" label="Canal" width="200">
+            </el-table-column>
+            <el-table-column fixed="right" label="Operations" width="200">
+              <template slot-scope="scope">
+                <el-button @click="atualizar" type="text" size="small"
+                  >Editar</el-button
+                >
+                <el-button
+                  type="text"
+                  size="small"
+                  @click.native.prevent="deleteRow(scope.$index, contatos)"
+                  >Excluir</el-button
+                >
+              </template>
+            </el-table-column>
+          </el-table>
         </div>
+      </template>
+
+      <template>
+        <q-dialog
+          v-model="abreModal"
+          persistent
+          v-show="this.selected.length != 0"
+        >
+          <q-card>
+            <q-card-section class="row items-center">
+              <q-avatar icon="delete" color="white" text-color="red" />
+              <span class="q-ml-sm"
+                >Deseja excluir o contato: {{ contatoSelecionado.nome }}?</span
+              >
+            </q-card-section>
+
+            <q-card-actions align="right">
+              <q-btn
+                flat
+                label="Excluir"
+                @click="excluir"
+                color="red"
+                v-close-popup
+              />
+              <q-btn flat label="Fechar" color="black" v-close-popup />
+            </q-card-actions>
+          </q-card>
+        </q-dialog>
       </template>
     </q-card-section>
   </q-page>
@@ -51,14 +92,13 @@
 import axios from "axios";
 export default {
   name: "PageIndex",
-  created: function() {
+  created() {
     this.loadData();
-  },
-  deleteRow() {
-    alert("Veio");
   },
   data() {
     return {
+      contatoSelecionado: {},
+      abreModal: false,
       selected: [],
       contatos: [],
       contato: {
@@ -67,7 +107,7 @@ export default {
         obs: null,
         canal: null
       },
-      canais: ["CELULAR", "EMAIL", "FIXO"],
+      canais: ["CELULAR", "E-MAIL", "FIXO"],
       columns: [
         {
           name: "nome",
@@ -114,6 +154,14 @@ export default {
     };
   },
   methods: {
+    deleteRow(index, rows) {
+      this.abreModal = true;
+      for (let tot = 0; tot < rows.length; tot++) {
+        if (index == tot) {
+          this.contatoSelecionado = rows[tot];
+        }
+      }
+    },
     limpar() {
       this.contato = {
         id: null,
@@ -125,19 +173,19 @@ export default {
       this.selected = [];
     },
     atualizar() {
-      this.contato = this.selected[0];
-      console.log(this.contato);
+      this.contato = this.contatoSelecionado;
     },
     async excluir() {
       await axios
         .delete(
-          "http://localhost:8888/gestao_contato/excluir/" + this.selected[0].id
+          "http://localhost:8888/gestao_contato/excluir/" +
+            this.contatoSelecionado.id
         )
         .then(response => {
+          this.loadData();
           console.log(response);
         })
         .catch(() => {});
-      this.loadData();
     },
     async salvar() {
       if (
@@ -165,6 +213,9 @@ export default {
       }
     },
     async loadData() {
+      if (this.selected.length != 0) {
+        this.atualizar();
+      }
       this.limpar();
       await axios
         .get("http://localhost:8888/gestao_contato/listar")
