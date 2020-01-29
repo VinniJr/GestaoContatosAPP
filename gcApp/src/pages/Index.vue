@@ -13,20 +13,7 @@
         <q-select v-model="contato.canal" :options="canais" label="Canal" />
       </div>
       <br />
-      <q-btn color="primary" label="Salvar" @click="salvar" />
-      <q-btn
-        color="secondary"
-        label="Atualizar"
-        v-show="selected.length == 1"
-        @click="atualizar"
-      />
-      <q-btn
-        color="deep-orange"
-        glossy
-        label="Excluir"
-        v-show="selected.length == 1"
-        @click="excluir"
-      />
+      <q-btn color="primary" label="Cadastrar" @click="salvar" />
       <br />
       <br />
       <template>
@@ -40,9 +27,12 @@
             </el-table-column>
             <el-table-column prop="canal" label="Canal" width="200">
             </el-table-column>
-            <el-table-column fixed="right" label="Operations" width="200">
+            <el-table-column fixed="right" label="Ações" width="200">
               <template slot-scope="scope">
-                <el-button @click="atualizar" type="text" size="small"
+                <el-button
+                  @click="atualizar(scope.$index, contatos)"
+                  type="text"
+                  size="small"
                   >Editar</el-button
                 >
                 <el-button
@@ -61,7 +51,7 @@
         <q-dialog
           v-model="abreModal"
           persistent
-          v-show="this.selected.length != 0"
+          v-show="this.contatoSelecionado != null"
         >
           <q-card>
             <q-card-section class="row items-center">
@@ -84,6 +74,46 @@
           </q-card>
         </q-dialog>
       </template>
+
+      <template>
+        <q-dialog
+          v-model="editarModal"
+          persistent
+          v-show="this.editarModal != false"
+        >
+          <q-card style="width: 50%">
+            <q-card-section class="row items-center">
+              <q-avatar icon="restore" color="white" text-color="green" />
+              <span class="q-ml-sm">Editar contato: </span>
+            </q-card-section>
+
+            <br />
+            <q-card-section>
+              <q-input v-model="contatoSelecionado.nome" label="Nome" />
+              <q-input v-model="contatoSelecionado.valor" label="Valor" />
+              <q-input v-model="contatoSelecionado.obs" label="Observacao" />
+              <q-select
+                v-model="contatoSelecionado.canal"
+                :options="canais"
+                label="Canal"
+              />
+            </q-card-section>
+
+            <br />
+
+            <q-card-actions align="right">
+              <q-btn
+                flat
+                label="Atualizar"
+                @click="salvar"
+                color="primary"
+                v-close-popup
+              />
+              <q-btn flat label="Fechar" color="black" v-close-popup />
+            </q-card-actions>
+          </q-card>
+        </q-dialog>
+      </template>
     </q-card-section>
   </q-page>
 </template>
@@ -97,9 +127,9 @@ export default {
   },
   data() {
     return {
-      contatoSelecionado: {},
+      contatoSelecionado: null,
       abreModal: false,
-      selected: [],
+      editarModal: false,
       contatos: [],
       contato: {
         nome: null,
@@ -107,7 +137,7 @@ export default {
         obs: null,
         canal: null
       },
-      canais: ["CELULAR", "E-MAIL", "FIXO"],
+      canais: ["CELULAR", "EMAIL", "FIXO"],
       columns: [
         {
           name: "nome",
@@ -170,10 +200,17 @@ export default {
         obs: null,
         canal: null
       };
-      this.selected = [];
+      this.contatoSelecionado = {};
     },
-    atualizar() {
-      this.contato = this.contatoSelecionado;
+    atualizar(index, rows) {
+      for (let tot = 0; tot < rows.length; tot++) {
+        if (index == tot) {
+          this.contatoSelecionado = rows[tot];
+        }
+      }
+      if (this.contatoSelecionado != null) {
+        this.editarModal = true;
+      }
     },
     async excluir() {
       await axios
@@ -188,6 +225,10 @@ export default {
         .catch(() => {});
     },
     async salvar() {
+      debugger;
+      if (this.contatoSelecionado != null) {
+        this.contato = this.contatoSelecionado;
+      }
       if (
         this.contato.nome != null &&
         this.contato.valor != null &&
@@ -213,9 +254,6 @@ export default {
       }
     },
     async loadData() {
-      if (this.selected.length != 0) {
-        this.atualizar();
-      }
       this.limpar();
       await axios
         .get("http://localhost:8888/gestao_contato/listar")
