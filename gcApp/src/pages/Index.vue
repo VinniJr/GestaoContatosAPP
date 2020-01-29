@@ -127,7 +127,13 @@ export default {
   },
   data() {
     return {
-      contatoSelecionado: null,
+      contatoSelecionado: {
+        id: null,
+        nome: null,
+        valor: null,
+        obs: null,
+        canal: null
+      },
       abreModal: false,
       editarModal: false,
       contatos: [],
@@ -200,7 +206,13 @@ export default {
         obs: null,
         canal: null
       };
-      this.contatoSelecionado = {};
+      this.contatoSelecionado = {
+        id: null,
+        nome: null,
+        valor: null,
+        obs: null,
+        canal: null
+      };
     },
     atualizar(index, rows) {
       for (let tot = 0; tot < rows.length; tot++) {
@@ -226,7 +238,7 @@ export default {
     },
     async salvar() {
       debugger;
-      if (this.contatoSelecionado != null) {
+      if (this.contatoSelecionado.id != null) {
         this.contato = this.contatoSelecionado;
       }
       if (
